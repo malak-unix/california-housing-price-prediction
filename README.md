@@ -1,89 +1,216 @@
-# PropValue AI — California Housing Prediction
+# PropValue AI — California Housing Price Prediction
 
-PropValue AI is a responsive React interface for the project’s trained CatBoost regression pipeline. It sends the eight California Housing dataset features to FastAPI, displays only genuine returned predictions, presents verified evaluation metrics, and provides interactive geographic context.
+An end-to-end Machine Learning project that explores, compares, optimizes and deploys regression models to estimate historical median housing values in California.
 
-## Scientific scope
+**[Live Demo](https://malak-unix.github.io/california-housing-price-prediction/)** | **[GitHub Repository](https://github.com/malak-unix/california-housing-price-prediction)**
 
-The model uses the California Housing dataset derived from the 1990 U.S. Census. Each row represents a census block group and the target is that area’s median housing value. A result is therefore **not** a present-day appraisal, listing estimate, confidence guarantee, or predicted sale price for an individual property.
+> **Demo limitation:** GitHub Pages hosts the React frontend only. The FastAPI backend must be running separately for interactive predictions. The Model Insights section remains accessible online.
 
-Verified project artifacts:
+## 1. Project Overview
 
-- Final held-out test metrics: `reports/evaluation_finale_test.csv`
-- Optimized validation comparison: `reports/comparaison_modeles_optimises.csv`
-- Model metadata and feature order: `models/pipeline_metadata.json`
-- Trained pipeline: `models/pipeline_immobilier.joblib`
+The objective of this project is to develop a complete Machine Learning workflow, from exploratory data analysis to model selection, evaluation and integration into a web application.
 
-## Local setup
+Rather than selecting an algorithm in advance, the approach focuses on experimentally comparing multiple candidates under a consistent evaluation protocol.
+
+**Technologies:** Python, Pandas, Scikit-learn, CatBoost, LightGBM, XGBoost, Optuna, FastAPI, React, TypeScript, Tailwind CSS and shadcn/ui.
+
+## 2. Dataset and Exploratory Data Analysis
+
+The project uses the **California Housing dataset**, derived from the 1990 U.S. Census.
+
+It contains 20,640 observations and eight numerical input features:
+
+| Feature | Description |
+|---|---|
+| MedInc | Median household income |
+| HouseAge | Median housing age |
+| AveRooms | Average rooms per household |
+| AveBedrms | Average bedrooms per household |
+| Population | Census block-group population |
+| AveOccup | Average household occupancy |
+| Latitude | Geographic latitude |
+| Longitude | Geographic longitude |
+
+**Target:** `MedHouseVal` — median housing value, expressed in units of $100,000.
+
+The exploratory analysis included inspecting the dataset structure, checking missing values, studying feature distributions and exploring relationships between the predictors and target.
+
+**Important:** The dataset describes historical census areas, not individual properties or current real-estate market prices.
+
+## 3. Experimental Methodology
+
+### Step 1 — Data splitting
+
+The dataset was divided into three independent subsets:
+
+| Subset | Proportion | Observations |
+|---|---:|---:|
+| Training | 70% | 14,448 |
+| Validation | 15% | 3,096 |
+| Test | 15% | 3,096 |
+
+The training set was used to fit candidate models. The validation set was used to compare and select models. The test set was reserved for the final evaluation.
+
+### Step 2 — Baseline and model benchmarking
+
+A DummyRegressor established a baseline against which more advanced models could be evaluated.
+
+Five regression algorithms were then compared:
+
+- ExtraTrees
+- HistGradientBoosting
+- XGBoost
+- LightGBM
+- CatBoost
+
+The main selection metric was **Mean Absolute Error (MAE)**, because it expresses average prediction error in an interpretable unit.
+
+RMSE and R² were also tracked to provide complementary information.
+
+### Step 3 — Hyperparameter optimization
+
+Four promising candidates were optimized using **Optuna**, with five-fold cross-validation on the training data.
+
+The goal was to improve generalization rather than simply maximize performance on the training set.
+
+Optimized validation results:
+
+| Model | Validation MAE |
+|---|---:|
+| **CatBoost** | **$28,470.70** |
+| LightGBM | $29,292.59 |
+| HistGradientBoosting | $29,452.31 |
+| XGBoost | $29,631.96 |
+
+ExtraTrees was included in the initial benchmark but not in this Optuna optimization stage.
+
+**CatBoost achieved the lowest validation MAE among the optimized candidates and was selected as the final model.**
+
+### Step 4 — Final training and evaluation
+
+After model selection, the CatBoost pipeline was retrained on the combined training and validation sets (17,544 observations).
+
+The final model was then evaluated on the held-out test set of 3,096 observations.
+
+## 4. Final Results
+
+| Test metric | Result |
+|---|---:|
+| **MAE** | **$28,644.52** |
+| **RMSE** | **$43,615.67** |
+| **R²** | **0.8548** |
+
+The results indicate that the model explains approximately 85.48% of the target variance on the test set.
+
+This does not mean that individual predictions have 85.48% confidence or accuracy.
+
+The trained model is saved as a Scikit-learn pipeline containing a median imputer and a CatBoost regressor.
+
+## 5. Web Application
+
+The project includes a responsive frontend developed using React, TypeScript, Tailwind CSS and shadcn/ui.
+
+It contains two main sections:
+
+**Predict**
+
+A form allows users to enter the eight input features and request a prediction from the FastAPI backend.
+
+**Model Insights**
+
+A dashboard presents the selected model, evaluation metrics and comparison of optimized candidates.
+
+The backend exposes two endpoints:
+
+- `POST /predict` — generate a prediction
+- `GET /health` — check API health
+
+## 6. Project Structure
+
+```text
+├── app/
+│   └── main.py
+├── data/
+│   └── splits/
+├── frontend/
+│   ├── public/
+│   └── src/
+├── models/
+│   ├── pipeline_immobilier.joblib
+│   └── pipeline_metadata.json
+├── notebooks/
+│   ├── 01_exploration.ipynb
+│   ├── 02_modelisation.ipynb
+│   ├── 03_optimisation.ipynb
+│   └── 04_finalisation.ipynb
+├── reports/
+├── requirements.txt
+└── README.md
+```
+
+## 7. Running Locally
 
 ### Backend
 
-From the repository root, use the project virtual environment so the serialized model loads with its matching CatBoost and scikit-learn versions:
-
-```powershell
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-If the virtual environment has not been prepared yet:
+Use Python 3.13 and run the following commands from the project root:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
-FastAPI exposes:
+The API will be accessible at `http://127.0.0.1:8000`.
 
-- `POST http://localhost:8000/predict`
-- `GET http://localhost:8000/health`
-- Swagger UI: `http://localhost:8000/docs`
+Swagger documentation: `http://127.0.0.1:8000/docs`
 
 ### Frontend
 
-In a second terminal:
+Open a second terminal:
 
 ```powershell
-Set-Location frontend
+cd frontend
 npm install
-Copy-Item .env.example .env.local
+```
+
+Create `frontend/.env.local` with:
+
+```dotenv
+VITE_API_URL=http://127.0.0.1:8000
+```
+
+Then launch the application:
+
+```powershell
 npm run dev
 ```
 
-Vite serves the site at `http://localhost:5173` by default.
+Open `http://localhost:5173`.
 
-## Environment variables
+## 8. Deployment
 
-`frontend/.env.example` documents both runtime settings:
+The React frontend is deployed using **GitHub Pages** and **GitHub Actions**.
 
-```dotenv
-VITE_API_URL=http://localhost:8000
-VITE_MAP_STYLE_URL=https://tiles.openfreemap.org/styles/dark
-```
+The deployed website provides a public demonstration of the interface and Model Insights section.
 
-- `VITE_API_URL` points the browser to FastAPI.
-- `VITE_MAP_STYLE_URL` may replace the default OpenFreeMap style with another MapLibre-compatible style document.
+Because GitHub Pages does not execute Python applications, interactive predictions require a separately running FastAPI backend.
 
-The backend CORS configuration permits the local Vite origins `http://localhost:5173` and `http://127.0.0.1:5173`.
+## 9. Key Takeaways
 
-## Map service
+This project reinforced several important Machine Learning principles:
 
-The interactive map uses [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/docs/) with the public [OpenFreeMap](https://openfreemap.org/) dark style. OpenFreeMap requires no API key or registration; its style provides the required OpenStreetMap/OpenMapTiles attribution in MapLibre. Map rendering requires internet access unless the style and tiles are self-hosted.
+- Understanding the dataset before selecting algorithms.
+- Establishing a baseline before benchmarking complex models.
+- Using consistent evaluation metrics across candidates.
+- Separating hyperparameter optimization from final testing.
+- Selecting models based on validation performance rather than training scores.
+- Integrating a trained model into an API and user-facing application.
+- Communicating model limitations alongside evaluation results.
 
-The marker represents an approximate historical census-area coordinate. Clicking the map or dragging the marker updates `Latitude` and `Longitude`; it does not verify a street address or individual property.
+The main takeaway is that a reliable ML solution depends not only on the algorithm, but also on the quality of the experimental methodology.
 
-## Hero photograph and license
+---
 
-The local asset `frontend/public/images/modern-villa-hero.jpg` is derived from:
-
-- **“Exterior of a Modern Villa”** by **Gustavo Galeano Maz**, via [Pexels](https://www.pexels.com/photo/exterior-of-a-modern-villa-13752348/)
-- Source dimensions: 6720 × 4480; locally downloaded at 2400 × 1600
-- License: [Pexels License](https://www.pexels.com/license/)
-
-Pexels permits free website use and modification, and attribution is not required. Credit is nevertheless included in the interface and here. The photograph is presented as California-style architectural imagery; its source does not establish that the building is located in California.
-
-## Production build
-
-```powershell
-Set-Location frontend
-npm run build
-```
-
-The output is written to `frontend/dist/`. The prediction and health interfaces still require the FastAPI service at runtime, and the default map requires the external OpenFreeMap tile service.
+**Dataset:** California Housing — Scikit-learn  
+**Final model:** CatBoostRegressor  
+**Project:** PropValue AI
