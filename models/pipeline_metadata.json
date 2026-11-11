@@ -1,0 +1,35 @@
+{
+    "nom_modele": "CatBoostRegressor",
+    "type_probleme": "regression",
+    "dataset": "California Housing",
+    "variables_entree": [
+        "MedInc",
+        "HouseAge",
+        "AveRooms",
+        "AveBedrms",
+        "Population",
+        "AveOccup",
+        "Latitude",
+        "Longitude"
+    ],
+    "nombre_variables": 8,
+    "cible": "MedHouseVal",
+    "unite_cible": "100000_USD",
+    "observations_entrainement": 17544,
+    "hyperparametres": {
+        "iterations": 800,
+        "learning_rate": 0.09638924565901015,
+        "depth": 8,
+        "l2_leaf_reg": 2.453554179189145
+    },
+    "evaluation_test": {
+        "MAE": 0.28644523465982236,
+        "RMSE": 0.436156723158941,
+        "R2": 0.8548404794172753
+    },
+    "versions": {
+        "python": "3.13.2",
+        "scikit_learn": "1.9.1",
+        "catboost": "1.2.10"
+    }
+}
