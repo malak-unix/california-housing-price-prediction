@@ -7,6 +7,8 @@ import tailwindcss from "@tailwindcss/vite"
 export default defineConfig({
   plugins: [react(), tailwindcss()],
 
+  base: "/california-housing-price-prediction/",
+
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "./src"),
